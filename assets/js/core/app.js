@@ -1,6 +1,8 @@
+import CameraService from '../services/camera.service.js';
+import DetectionService from '../services/detection.service.js';
 import UIHandler from '../ui/ui.handler.js';
 import { APP_CONFIG } from './config.js';
-import { createDelay, logError } from './utils.js';
+import { createDelay, isValidDetection, logError } from './utils.js';
 
 class NutriApp {
   constructor() {
@@ -44,6 +46,14 @@ class NutriApp {
   async init() {
     try {
       this.ui.showStatus('Memuat Model AI...');
+
+      this.detector = new DetectionService();
+      await this.detector.loadModel();
+
+      this.camera = new CameraService();
+
+      this.ui.showStatus('Model AI Siap');
+      this.ui.enableButton();
     } catch (error) {
       logError('Gagal menginisialisasi aplikasi', error);
       this.ui.showStatus('Model gagal dimuat');
@@ -143,6 +153,13 @@ class NutriApp {
           requestAnimationFrame(() => this.detectLoop(loopId));
         }
         return;
+      }
+
+      const result = await this.detector.predict(canvas);
+      console.log('Deteksi hasil:', result);
+      if (isValidDetection(result)) {
+        this.stopDetection();
+        this.ui.switchToState('result');
       }
     } catch (error) {
       logError('Deteksi error', error);
