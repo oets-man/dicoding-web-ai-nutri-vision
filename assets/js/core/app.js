@@ -1,5 +1,6 @@
 import CameraService from '../services/camera.service.js';
 import DetectionService from '../services/detection.service.js';
+import NutritionService from '../services/nutrition.service.js';
 import UIHandler from '../ui/ui.handler.js';
 import { APP_CONFIG } from './config.js';
 import { createDelay, isValidDetection, logError } from './utils.js';
@@ -51,6 +52,14 @@ class NutriApp {
       await this.detector.loadModel();
 
       this.camera = new CameraService();
+
+      this.generator = new NutritionService(this.ui);
+      try {
+        await this.generator.loadModel();
+      } catch (error) {
+        logError('Layanan nutrisi gagal dimuat (mode offline?)', error);
+        this.generator = null;
+      }
 
       this.ui.showStatus('Model AI Siap');
       this.ui.enableButton();
@@ -159,7 +168,10 @@ class NutriApp {
       console.log('Deteksi hasil:', result);
       if (isValidDetection(result)) {
         this.stopDetection();
-        this.ui.switchToState('result');
+        this.ui.switchToState('analyzing');
+
+        await createDelay(this.config.analyzingDelay);
+        await this.generateAndShowResults(result);
       }
     } catch (error) {
       logError('Deteksi error', error);
@@ -193,6 +205,16 @@ class NutriApp {
       if (this.generator && this.generator.isReady()) {
         await createDelay(this.config.nutritionGenerationDelay);
         this.ui.updateNutritionState('loading');
+
+        try {
+          const nutritionData = await this.generator.generateNutrition(
+            detectionResult.className,
+          );
+          this.ui.updateNutritionState('success', nutritionData.nutritionFact);
+        } catch (nutritionError) {
+          logError('Gagal menghasilkan konten nutrisi', nutritionError);
+          this.ui.updateNutritionState('error');
+        }
       } else {
         this.ui.updateNutritionState('error');
       }

@@ -113,7 +113,7 @@ export const updatePerformanceStats = (stats, operationTime) => {
 
 export const logPerformance = (type, backend, operationTime, averageTime) => {
   console.log(
-    `⚡ ${type} - ${backend.toUpperCase()}: ${Math.round(operationTime)}ms (avg: ${Math.round(averageTime)}ms)`,
+    `⚡ ${type} - ${backend?.toUpperCase()}: ${Math.round(operationTime)}ms (avg: ${Math.round(averageTime)}ms)`,
   );
 };
 
