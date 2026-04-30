@@ -3,6 +3,7 @@ import {
   createDelay,
   createModelProgressCallback,
   createPerformanceResult,
+  isWebGPUSupported,
   logError,
   logPerformance,
   updatePerformanceStats,
@@ -29,11 +30,19 @@ class NutritionService {
     try {
       const { pipeline } = await import(this.config.cdnUrl);
 
+      // const device = isWebGPUSupported() ? 'webgpu' : 'wasm';
+      // console.log(`Backend Transformers.js yang digunakan: ${device}`);
+
+      this.currentBackend = isWebGPUSupported() ? 'webgpu' : 'wasm';
+      const device = this.currentBackend;
+      console.log(`Backend Transformers.js yang digunakan: ${device}`);
+
       this.generator = await pipeline(
         'text2text-generation',
         this.config.modelName,
         {
           dtype: 'q4',
+          device,
           progress_callback: createModelProgressCallback((progress) => {
             if (this.ui && typeof this.ui.showStatus === 'function') {
               this.ui.showStatus(progress.message);
