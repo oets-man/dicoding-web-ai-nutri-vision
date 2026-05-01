@@ -30,11 +30,7 @@ class NutritionService {
     try {
       const { pipeline } = await import(this.config.cdnUrl);
 
-      // const device = isWebGPUSupported() ? 'webgpu' : 'wasm';
-      // console.log(`Backend Transformers.js yang digunakan: ${device}`);
-
-      this.currentBackend = isWebGPUSupported() ? 'webgpu' : 'wasm';
-      const device = this.currentBackend;
+      const device = isWebGPUSupported() ? 'webgpu' : 'wasm';
       console.log(`Backend Transformers.js yang digunakan: ${device}`);
 
       this.generator = await pipeline(
@@ -52,6 +48,7 @@ class NutritionService {
       );
 
       this.isModelLoaded = true;
+      this.currentBackend = device;
 
       return { success: true, model: this.config.modelName };
     } catch (error) {
